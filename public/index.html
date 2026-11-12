@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajaia Docs</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">📄 <strong>Ajaia Docs</strong> <span class="tag">lightweight collaborative editor</span></div>
+  <div class="userbox">
+    <label for="userSelect">Signed in as</label>
+    <select id="userSelect" aria-label="Switch demo user"></select>
+    <span class="hint">Demo login — switch user to test sharing</span>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="sidebar">
+    <button id="newDocBtn" class="primary">+ New document</button>
+    <label class="uploadBtn" for="uploadInput">⬆ Upload .txt / .md / .docx</label>
+    <input type="file" id="uploadInput" accept=".txt,.md,.markdown,.docx" hidden>
+    <p class="uploadNote">Upload creates a new editable doc. Max 5 MB.</p>
+
+    <input id="searchInput" type="search" placeholder="Search documents…" aria-label="Search documents">
+
+    <div class="tabs" role="tablist">
+      <button data-filter="all" class="tab active">All</button>
+      <button data-filter="owned" class="tab">Owned by me</button>
+      <button data-filter="shared" class="tab">Shared with me</button>
+    </div>
+    <ul id="docList" class="doclist"></ul>
+    <p id="listEmpty" class="empty" hidden>No documents here yet.</p>
+  </aside>
+
+  <section class="editorWrap">
+    <div id="viewerBanner" class="banner" hidden>You have <strong>Viewer</strong> access to this document — you can read it, but not edit it.</div>
+    <div id="noDoc" class="noDoc">
+      <h2>Pick a document, or create one</h2>
+      <p>Your docs are saved in SQLite and survive a refresh. Share one with Sara or Alex, then switch user above to see it appear under “Shared with me”.</p>
+    </div>
+
+    <div id="editorPane" hidden>
+      <div class="docHead">
+        <input id="titleInput" class="titleInput" aria-label="Document title" maxlength="200">
+        <span id="saveStatus" class="saveStatus">Saved</span>
+      </div>
+      <div class="meta" id="docMeta"></div>
+
+      <div class="toolbar" id="toolbar">
+        <button data-cmd="bold" title="Bold"><b>B</b></button>
+        <button data-cmd="italic" title="Italic"><i>I</i></button>
+        <button data-cmd="underline" title="Underline"><u>U</u></button>
+        <select id="blockSelect" title="Text style">
+          <option value="p">Normal text</option>
+          <option value="h1">Heading 1</option>
+          <option value="h2">Heading 2</option>
+          <option value="h3">Heading 3</option>
+        </select>
+        <button data-cmd="insertUnorderedList" title="Bulleted list">• List</button>
+        <button data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+        <button data-cmd="removeFormat" title="Clear formatting">Clear</button>
+      </div>
+
+      <div id="editor" class="sheet" contenteditable="true" spellcheck="true" aria-label="Document content"></div>
+
+      <div class="actions">
+        <button id="saveBtn" class="primary">Save now</button>
+        <button id="shareBtn">Share…</button>
+        <button id="versionsBtn">Version history</button>
+        <button id="exportBtn">Export Markdown</button>
+        <button id="deleteBtn" class="danger">Delete</button>
+        <span id="wordCount" class="wordCount"></span>
+      </div>
+      <div id="versionsPanel" class="versions" hidden></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="shareDialog">
+  <form method="dialog" class="shareForm">
+    <h3>Share “<span id="shareDocTitle"></span>”</h3>
+    <p class="muted">Only the owner can share. Editors can edit, Viewers can only read.</p>
+    <div class="shareRow">
+      <select id="shareUserSelect" aria-label="User to share with"></select>
+      <select id="shareRoleSelect" aria-label="Role">
+        <option value="editor">Editor</option>
+        <option value="viewer">Viewer</option>
+      </select>
+      <button id="addShareBtn" type="button" class="primary">Share</button>
+    </div>
+    <ul id="shareList" class="shareList"></ul>
+    <p id="shareError" class="error" hidden></p>
+    <button class="secondary" value="close">Close</button>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>
