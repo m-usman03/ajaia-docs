@@ -254,9 +254,67 @@ $('#addShareBtn').onclick = async () => {
     toast('Shared');
   } catch (e) { errEl.textContent = e.message; errEl.hidden = false; }
 };
+// --- Clear formatting -----------------------------------------------------
+// document.execCommand('removeFormat') alone is not enough: it only strips
+// inline formatting (bold/italic/underline) and does nothing to headings or
+// lists. It also silently does nothing when clicking the toolbar button has
+// already moved focus (and the text selection) out of the editor. So Clear:
+//  1. keeps the selection (see the mousedown handler below),
+//  2. strips inline formatting,
+//  3. turns headings back into normal paragraphs,
+//  4. turns list items back into plain paragraphs.
+// If nothing is selected, it clears the formatting of the current paragraph.
+function clearFormatting() {
+  const editor = $('#editor');
+  editor.focus();
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  let range = sel.getRangeAt(0);
+  if (range.collapsed) {
+    const node = sel.anchorNode;
+    const block = node && node.nodeType === 3 ? node.parentElement : node;
+    const para = block && block.closest ? block.closest('h1,h2,h3,li,p,blockquote') : null;
+    if (!para || !editor.contains(para)) return;
+    range = document.createRange();
+    range.selectNodeContents(para);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  document.execCommand('removeFormat', false, null);
+  document.execCommand('formatBlock', false, 'p');
+  // Lists survive removeFormat/formatBlock, so convert any list that the
+  // selection touches into plain paragraphs, keeping the text.
+  editor.querySelectorAll('ul,ol').forEach((list) => {
+    if (!sel.rangeCount || !sel.getRangeAt(0).intersectsNode(list)) return;
+    const frag = document.createDocumentFragment();
+    list.querySelectorAll('li').forEach((li) => {
+      const p = document.createElement('p');
+      p.textContent = li.textContent;
+      frag.appendChild(p);
+    });
+    list.replaceWith(frag);
+  });
+  // Strip any inline tags left behind (e.g. spans), keeping their text.
+  editor.querySelectorAll('strong,em,u,b,i,span,code,a').forEach((el) => {
+    if (!sel.rangeCount || !sel.getRangeAt(0).intersectsNode(el)) return;
+    el.replaceWith(document.createTextNode(el.textContent));
+  });
+  // Normalise: empty blocks left behind become a single empty paragraph.
+  if (!editor.textContent.trim()) editor.innerHTML = '<p></p>';
+  wordCount();
+  scheduleSave();
+}
+
+$('#toolbar').addEventListener('mousedown', (e) => {
+  // Clicking a toolbar button steals focus (and the text selection) from
+  // the editor in Chrome, so formatting commands then run on nothing.
+  // Prevent that for buttons; the click handler below still fires.
+  if (e.target.closest('button[data-cmd]')) e.preventDefault();
+});
 $('#toolbar').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-cmd]');
   if (!btn || state.currentDoc?.access === 'viewer') return;
+  if (btn.dataset.cmd === 'removeFormat') { clearFormatting(); return; }
   document.execCommand(btn.dataset.cmd, false, null);
   $('#editor').focus();
   scheduleSave();
